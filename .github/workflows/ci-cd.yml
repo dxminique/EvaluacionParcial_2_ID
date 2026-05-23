@@ -1,0 +1,227 @@
+name: CI/CD Pipeline - Ticket Service
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: ticket-service
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  # ─────────────────────────────────────────
+  # JOB 1: Build y Tests
+  # ─────────────────────────────────────────
+  build-and-test:
+    name: Build y Pruebas Unitarias
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Compilar proyecto
+        run: ./mvnw clean compile -q
+
+      - name: Ejecutar pruebas unitarias con cobertura
+        run: ./mvnw test jacoco:report
+
+      - name: Publicar reporte de cobertura
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: target/site/jacoco/
+
+      - name: Verificar cobertura mínima (60%)
+        run: |
+          COVERAGE=$(./mvnw jacoco:check \
+            -Djacoco.haltOnFailure=false \
+            -Djacoco.check.minimum=0.60 2>&1 | grep -i "coverage" | tail -1)
+          echo "Cobertura: $COVERAGE"
+
+  # ─────────────────────────────────────────
+  # JOB 2: Análisis de Seguridad - Snyk
+  # ─────────────────────────────────────────
+  security-snyk:
+    name: Análisis de Seguridad (Snyk)
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Compilar para Snyk
+        run: ./mvnw clean package -DskipTests -q
+
+      - name: Ejecutar análisis Snyk
+        uses: snyk/actions/maven@master
+        continue-on-error: false
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --fail-on=all
+
+      - name: Exportar reporte Snyk
+        uses: snyk/actions/maven@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --json-file-output=snyk-report.json
+        continue-on-error: true
+
+      - name: Subir reporte Snyk
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-report
+          path: snyk-report.json
+
+  # ─────────────────────────────────────────
+  # JOB 3: Análisis de Calidad - SonarCloud
+  # ─────────────────────────────────────────
+  sonarcloud:
+    name: Análisis de Calidad (SonarCloud)
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Ejecutar tests y análisis SonarCloud
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          ./mvnw verify sonar:sonar \
+            -Dsonar.projectKey=ticket-service \
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+
+  # ─────────────────────────────────────────
+  # JOB 4: Build y Push imagen a AWS ECR
+  # ─────────────────────────────────────────
+  docker-build-push:
+    name: Build y Push imagen Docker a ECR
+    runs-on: ubuntu-latest
+    needs: [security-snyk, sonarcloud]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
+    outputs:
+      image_uri: ${{ steps.build-image.outputs.image_uri }}
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Compilar JAR
+        run: ./mvnw clean package -DskipTests -q
+
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login en Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Construir y publicar imagen Docker
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker build -t $IMAGE_URI .
+          docker push $IMAGE_URI
+          echo "image_uri=$IMAGE_URI" >> $GITHUB_OUTPUT
+          echo "Imagen publicada: $IMAGE_URI"
+
+  # ─────────────────────────────────────────
+  # JOB 5: Deploy automático en EC2
+  # ─────────────────────────────────────────
+  deploy:
+    name: Deploy en EC2 (Docker Compose)
+    runs-on: ubuntu-latest
+    needs: docker-build-push
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Deploy vía SSH a EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Login ECR desde EC2
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+              docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+
+            # Actualizar imagen en docker-compose y levantar
+            export IMAGE_URI=${{ needs.docker-build-push.outputs.image_uri }}
+            cd ~/ticket-service
+            docker compose pull
+            docker compose up -d --remove-orphans
+
+            # Verificar que el servicio levantó
+            sleep 15
+            curl -f http://localhost:8081/actuator/health || exit 1
+            echo "Deploy completado exitosamente"
+
+  # ─────────────────────────────────────────
+  # JOB 6: Notificación final
+  # ─────────────────────────────────────────
+  notify:
+    name: Notificación resultado pipeline
+    runs-on: ubuntu-latest
+    needs: [build-and-test, security-snyk, sonarcloud, docker-build-push, deploy]
+    if: always()
+
+    steps:
+      - name: Resultado del pipeline
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "✅ Pipeline completado - Deploy exitoso en EC2"
+          else
+            echo "❌ Pipeline falló - Revisar logs"
+            exit 1
+          fi
