@@ -71,7 +71,7 @@ public class TicketController {
     // Fix: manejo de ticket inexistente
     @GetMapping("/{id}/estado")
     public ResponseEntity<String> consultarEstado(@PathVariable Long id) {
-        EstadoTicket estado = consultarEstadoTicketUseCase.consultarEstado(id);
+        EstadoTicket estado = consultarEstadoTicketDbUseCase.consultarEstado(id);
         return ResponseEntity.ok(estado.name());
     }
 }
