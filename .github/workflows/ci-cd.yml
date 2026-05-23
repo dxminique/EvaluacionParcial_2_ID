@@ -53,6 +53,9 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Instalar Maven Wrapper
+        run: mvn wrapper:wrapper
+
       - name: Compilar para Snyk
         run: mvn clean package -DskipTests -q
 
