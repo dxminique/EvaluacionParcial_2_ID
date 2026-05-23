@@ -12,9 +12,9 @@ env:
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
-  # ─────────────────────────────────────────
+  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   # JOB 1: Build y Tests
-  # ─────────────────────────────────────────
+  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   build-and-test:
     name: Build y Pruebas Unitarias
     runs-on: ubuntu-latest
@@ -42,18 +42,18 @@ jobs:
           name: jacoco-report
           path: target/site/jacoco/
 
-      - name: Verificar cobertura mínima (60%)
+      - name: Verificar cobertura mÃ­nima (60%)
         run: |
           COVERAGE=$(mvn jacoco:check \
             -Djacoco.haltOnFailure=false \
             -Djacoco.check.minimum=0.60 2>&1 | grep -i "coverage" | tail -1)
           echo "Cobertura: $COVERAGE"
 
-  # ─────────────────────────────────────────
-  # JOB 2: Análisis de Seguridad - Snyk
-  # ─────────────────────────────────────────
+  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # JOB 2: AnÃ¡lisis de Seguridad - Snyk
+  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   security-snyk:
-    name: Análisis de Seguridad (Snyk)
+    name: AnÃ¡lisis de Seguridad (Snyk)
     runs-on: ubuntu-latest
     needs: build-and-test
 
@@ -71,7 +71,7 @@ jobs:
       - name: Compilar para Snyk
         run: mvn clean package -DskipTests -q
 
-      - name: Ejecutar análisis Snyk
+      - name: Ejecutar anÃ¡lisis Snyk
         uses: snyk/actions/maven@master
         continue-on-error: false
         env:
@@ -93,11 +93,11 @@ jobs:
           name: snyk-report
           path: snyk-report.json
 
-  # ─────────────────────────────────────────
-  # JOB 3: Análisis de Calidad - SonarCloud
-  # ─────────────────────────────────────────
+  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # JOB 3: AnÃ¡lisis de Calidad - SonarCloud
+  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   sonarcloud:
-    name: Análisis de Calidad (SonarCloud)
+    name: AnÃ¡lisis de Calidad (SonarCloud)
     runs-on: ubuntu-latest
     needs: build-and-test
 
@@ -114,7 +114,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Ejecutar tests y análisis SonarCloud
+      - name: Ejecutar tests y anÃ¡lisis SonarCloud
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
@@ -124,9 +124,9 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
-  # ─────────────────────────────────────────
+  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   # JOB 4: Build y Push imagen a AWS ECR
-  # ─────────────────────────────────────────
+  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   docker-build-push:
     name: Build y Push imagen Docker a ECR
     runs-on: ubuntu-latest
@@ -172,9 +172,9 @@ jobs:
           echo "image_uri=$IMAGE_URI" >> $GITHUB_OUTPUT
           echo "Imagen publicada: $IMAGE_URI"
 
-  # ─────────────────────────────────────────
-  # JOB 5: Deploy automático en EC2
-  # ─────────────────────────────────────────
+  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # JOB 5: Deploy automÃ¡tico en EC2
+  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   deploy:
     name: Deploy en EC2 (Docker Compose)
     runs-on: ubuntu-latest
@@ -185,7 +185,7 @@ jobs:
       - name: Clonar repositorio
         uses: actions/checkout@v4
 
-      - name: Deploy vía SSH a EC2
+      - name: Deploy vÃ­a SSH a EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -202,16 +202,16 @@ jobs:
             docker compose pull
             docker compose up -d --remove-orphans
 
-            # Verificar que el servicio levantó
+            # Verificar que el servicio levantÃ³
             sleep 15
             curl -f http://localhost:8081/actuator/health || exit 1
             echo "Deploy completado exitosamente"
 
-  # ─────────────────────────────────────────
-  # JOB 6: Notificación final
-  # ─────────────────────────────────────────
+  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  # JOB 6: NotificaciÃ³n final
+  # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   notify:
-    name: Notificación resultado pipeline
+    name: NotificaciÃ³n resultado pipeline
     runs-on: ubuntu-latest
     needs: [build-and-test, security-snyk, sonarcloud, docker-build-push, deploy]
     if: always()
@@ -220,8 +220,8 @@ jobs:
       - name: Resultado del pipeline
         run: |
           if [ "${{ needs.deploy.result }}" == "success" ]; then
-            echo "✅ Pipeline completado - Deploy exitoso en EC2"
+            echo "âœ… Pipeline completado - Deploy exitoso en EC2"
           else
-            echo "❌ Pipeline falló - Revisar logs"
+            echo "âŒ Pipeline fallÃ³ - Revisar logs"
             exit 1
           fi
