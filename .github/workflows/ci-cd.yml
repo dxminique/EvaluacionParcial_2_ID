@@ -31,10 +31,10 @@ jobs:
           cache: maven
 
       - name: Compilar proyecto
-        run: ./mvnw clean compile -q
+        run: mvn clean compile -q
 
       - name: Ejecutar pruebas unitarias con cobertura
-        run: ./mvnw test jacoco:report
+        run: mvn test jacoco:report
 
       - name: Publicar reporte de cobertura
         uses: actions/upload-artifact@v4
@@ -44,7 +44,7 @@ jobs:
 
       - name: Verificar cobertura mínima (60%)
         run: |
-          COVERAGE=$(./mvnw jacoco:check \
+          COVERAGE=$(mvn jacoco:check \
             -Djacoco.haltOnFailure=false \
             -Djacoco.check.minimum=0.60 2>&1 | grep -i "coverage" | tail -1)
           echo "Cobertura: $COVERAGE"
@@ -69,7 +69,7 @@ jobs:
           cache: maven
 
       - name: Compilar para Snyk
-        run: ./mvnw clean package -DskipTests -q
+        run: mvn clean package -DskipTests -q
 
       - name: Ejecutar análisis Snyk
         uses: snyk/actions/maven@master
@@ -118,7 +118,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          ./mvnw verify sonar:sonar \
+          mvn verify sonar:sonar \
             -Dsonar.projectKey=ticket-service \
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
             -Dsonar.host.url=https://sonarcloud.io \
@@ -148,7 +148,7 @@ jobs:
           cache: maven
 
       - name: Compilar JAR
-        run: ./mvnw clean package -DskipTests -q
+        run: mvn clean package -DskipTests -q
 
       - name: Configurar credenciales AWS
         uses: aws-actions/configure-aws-credentials@v4
