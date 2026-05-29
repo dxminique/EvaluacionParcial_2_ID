@@ -83,7 +83,10 @@ tuve algunos problemas con las credenciales de AWS ya bque expiran y debia cambi
 Como mejora futura, me gustaría implementar orquestación con Kubernetes, que actualmente estoy aprendiendo tambien como poder actualizar las credenciales sin tener que agregarlas manualmente.
 
 **HECTOR PEÑA**
-(aqui)
+* **Qué aprendiste del proyecto:** Aprendí a estructurar un pipeline de CI/CD automatizado, integrando pruebas, análisis de calidad (SonarCloud), seguridad (Snyk) y despliegue en AWS.
+* **Qué parte hiciste tú:** Me enfoqué en el código del microservicio, el desarrollo de pruebas unitarias con JUnit 5/Mockito para superar el 60% de cobertura y en la configuración de Docker.
+* **Qué dificultades tuviste:** El mayor reto fue corregir los bugs y *code smells* que detectaba SonarCloud, ya que el Quality Gate fallido bloqueaba el despliegue a la EC2.
+* **Qué mejorarías:** Subiría la cobertura de código a un 80% con pruebas de integración y configuraría alertas automáticas en Discord/Slack si el pipeline llega a fallar.
 
 ---
 ## Uso de IA
