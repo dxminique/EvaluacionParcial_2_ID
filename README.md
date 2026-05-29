@@ -74,7 +74,18 @@ docker compose up -d
 - **Análisis de código** en cada push vía SonarCloud
 
 ---
+## Reflexiones individuales
+**DOMINIQUE COFRE**
+Aprendi a como integrar seguridad a mi repositorio con las herramientas entregadas en clases como Snyk, jacoco y sonarQube, t6ambien la orquestacion de docker coordinando la comunicación entre el microservicio y la base de datos MySQL mediante healthchecks. y a como funciona un pipeline CI/CD.
 
+tuve algunos problemas con las credenciales de AWS ya bque expiran y debia cambiarlas siempre en los secrets del github, me confundi de EC2 al realizar la prueba asi que tuve que lo que me obligó a instalar Docker y configurar las credenciales de AWS CLI nuevamente en la instancia correcta. Otro problema fue con el archivo mvnw que no tenía permisos de ejecución en el repositorio, lo que impedía que el pipeline compilara el proyecto.
+
+Como mejora futura, me gustaría implementar orquestación con Kubernetes, que actualmente estoy aprendiendo tambien como poder actualizar las credenciales sin tener que agregarlas manualmente.
+
+**HECTOR PEÑA**
+(aqui)
+
+---
 ## Uso de IA
 
 Este proyecto utilizó Claude (Anthropic) como apoyo para la generación de archivos de configuración (Dockerfile, docker-compose.yml, workflows). Todas las decisiones técnicas, ajustes y validaciones fueron realizadas por el equipo. Citado según política DuocUC: https://bibliotecas.duoc.cl/ia
