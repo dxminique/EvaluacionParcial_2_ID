@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import com.example.ticket.domain.model.EstadoTicket;
 import com.example.ticket.domain.model.Ticket;
@@ -70,7 +71,7 @@ public class TicketController {
     // Fix: manejo de ticket inexistente
     @GetMapping("/{id}/estado")
     public ResponseEntity<String> consultarEstado(@PathVariable Long id) {
-        EstadoTicket estado = consultarEstadoTicketUseCase.consultarEstado(id);
+        EstadoTicket estado = consultarEstadoTicketDbUseCase.consultarEstado(id);
         return ResponseEntity.ok(estado.name());
     }
 }

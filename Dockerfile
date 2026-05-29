@@ -4,13 +4,13 @@
 FROM eclipse-temurin:17-jdk-alpine AS builder
 WORKDIR /app
 
-COPY mvnw .
-COPY .mvn .mvn
+RUN apk add --no-cache maven
+
 COPY pom.xml .
-RUN ./mvnw dependency:go-offline -q
+RUN mvn dependency:go-offline -q
 
 COPY src ./src
-RUN ./mvnw clean package -DskipTests -q
+RUN mvn clean package -DskipTests -q
 
 # ============================
 # STAGE 2: Runtime
