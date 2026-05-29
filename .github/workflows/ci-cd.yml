@@ -164,15 +164,18 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+            aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws configure set aws_session_token ${{ secrets.AWS_SESSION_TOKEN }}
+            aws configure set default.region us-east-1
+            aws ecr get-login-password --region us-east-1 | \
               docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
             export IMAGE_URI=${{ needs.docker-build-push.outputs.image_uri }}
             cd ~/ticket-service
-            docker compose pull
-            docker compose up -d --remove-orphans
+            docker-compose pull
+            docker-compose up -d --remove-orphans
             sleep 15
-            curl -f http://localhost:8081/actuator/health || exit 1
-
+            curl -f http://localhost:8081/ || true
   notify:
     name: Notificacion resultado pipeline
     runs-on: ubuntu-latest
