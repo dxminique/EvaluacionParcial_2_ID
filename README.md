@@ -45,7 +45,7 @@ services:
 
 Levantamiento local:
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
 ---
@@ -59,10 +59,10 @@ docker compose up -d
 | `SONAR_ORGANIZATION` | Organización en SonarCloud |
 | `AWS_ACCESS_KEY_ID` | Credenciales AWS |
 | `AWS_SECRET_ACCESS_KEY` | Credenciales AWS |
+| `AWS_SESSION_TOKEN` | Token de sesion AWS, si se usan credenciales temporales |
 | `EC2_HOST` | IP pública de la instancia EC2 |
 | `EC2_USER` | Usuario SSH (ej: `ec2-user`) |
 | `EC2_SSH_KEY` | Clave privada SSH |
-| `ECR_REGISTRY` | URL del registro ECR |
 
 ---
 
