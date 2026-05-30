@@ -177,6 +177,7 @@ jobs:
               aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
               aws configure set aws_session_token ${{ secrets.AWS_SESSION_TOKEN }}
               aws configure set default.region us-east-1
+              docker logout
               aws ecr get-login-password --region us-east-1 | \
                 docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
               export IMAGE_URI=${{ needs.docker-build-push.outputs.image_uri }}
