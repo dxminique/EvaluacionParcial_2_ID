@@ -183,7 +183,7 @@ jobs:
                 docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
               export IMAGE_URI=${{ needs.docker-build-push.outputs.image_uri }}
               cd ~/ticket-service
-              docker-compose pull
+              docker pull $IMAGE_URI
               docker-compose up -d --remove-orphans
               sleep 20
               curl http://localhost:8081/ && echo "Deploy exitoso" || echo "App iniciando"
