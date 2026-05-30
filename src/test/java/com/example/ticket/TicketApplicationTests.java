@@ -8,10 +8,14 @@ import com.example.ticket.application.TicketService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -60,7 +64,7 @@ class TicketApplicationTests {
     void consultarEstado_ticketInexistente_debeLanzarExcepcion() {
         when(ticketRepositoryPort.buscarPorId(99L)).thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> ticketService.consultarEstado(99L));
         assertEquals("Ticket no encontrado", ex.getMessage());
     }
@@ -73,5 +77,51 @@ class TicketApplicationTests {
         ticketService.registrar("Lentitud", "Sistema lento");
 
         verify(ticketRepositoryPort, times(1)).guardar(any(Ticket.class));
+    }
+
+    @ParameterizedTest
+    @MethodSource("camposInvalidosParaRegistro")
+    void registrarTicket_camposInvalidos_debeLanzarExcepcion(String titulo,
+                                                             String descripcion,
+                                                             String mensajeEsperado) {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> ticketService.registrar(titulo, descripcion));
+
+        assertEquals(mensajeEsperado, ex.getMessage());
+        verifyNoInteractions(ticketRepositoryPort, notificarTicketPort);
+    }
+
+    private static Stream<Arguments> camposInvalidosParaRegistro() {
+        return Stream.of(
+                Arguments.of(null, "Descripcion valida", "titulo no puede estar vacio"),
+                Arguments.of("", "Descripcion valida", "titulo no puede estar vacio"),
+                Arguments.of(" ", "Descripcion valida", "titulo no puede estar vacio"),
+                Arguments.of("Titulo valido", null, "descripcion no puede estar vacio"),
+                Arguments.of("Titulo valido", "", "descripcion no puede estar vacio"),
+                Arguments.of("Titulo valido", " ", "descripcion no puede estar vacio")
+        );
+    }
+
+    @Test
+    void consultarEstado_idNulo_debeLanzarExcepcion() {
+        NullPointerException ex = assertThrows(NullPointerException.class,
+                () -> ticketService.consultarEstado(null));
+
+        assertEquals("ticketId no puede ser null", ex.getMessage());
+        verifyNoInteractions(ticketRepositoryPort, notificarTicketPort);
+    }
+
+    @Test
+    void ticket_debeExponerDatosYActualizarId() {
+        Ticket ticket = new Ticket(null, "Consulta", "Detalle de la consulta", EstadoTicket.ABIERTO);
+
+        ticket.setId(10L);
+
+        assertAll(
+                () -> assertEquals(10L, ticket.getId()),
+                () -> assertEquals("Consulta", ticket.getTitulo()),
+                () -> assertEquals("Detalle de la consulta", ticket.getDescripcion()),
+                () -> assertEquals(EstadoTicket.ABIERTO, ticket.getEstado())
+        );
     }
 }
